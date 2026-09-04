@@ -7,7 +7,7 @@ Metro Trains lines — drawn along the real street and track geometry.
 
 ## Live
 
-Local build on port 8180 (`npm run serve`). Not published yet.
+**https://miqell24.github.io/melbourne-bus-map/** — GitHub Pages serves `main:/docs`; local build on port 8180 (`npm run serve`).
 
 Everything comes from ONE bundle — the **PTV GTFS Schedule** published by
 Transport Victoria (<https://discover.data.vic.gov.au/dataset/gtfs-schedule>,
