@@ -1,0 +1,6 @@
+node_modules/
+data/gtfs-*/
+data/osm/
+data/*.zip
+data/*.pbf
+data/out/
