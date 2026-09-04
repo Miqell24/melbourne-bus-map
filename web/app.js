@@ -752,6 +752,10 @@ async function init() {
         // guarantee as the per-band constant; only ZOOM-interpolated sizes
         // drift against icon-text-fit)
         'text-size': ['*', BADGE_EM[b] ?? 10, ['coalesce', ['get', 'sc'], 1]],
+        // a key is ONE line of text: the default 10 em wrap would fold the
+        // train names ("Flemington Racecourse") into two-row boxes the
+        // pipeline's 2 em cell pitch has no room for
+        'text-max-width': 40,
         'text-offset': ['get', 'off'],
         'icon-image': ['concat', 'badge-', ['coalesce', ['get', 'color'], KMK]],
         'icon-text-fit': 'both',

@@ -1671,6 +1671,18 @@ const BADGE_BANDS = [[13, 13.6], [13.6, 14.4], [14.4, 15.5], [15.5, 16.8], [16.8
   // the same Int16 wall at ±42 em; rows only pass 20 — y 41.1 em — beyond
   // 500 lines in one complex, hence the emission-time warning below).
   const perRowOf = (n) => Math.min(24, Math.max(PER_ROW, Math.ceil(n / 6)));
+  // Cells follow the WIDEST key in the complex. The 3.4 em cell is sized for
+  // line numbers; Melbourne's train lines are keyed by their names
+  // ("Flemington Racecourse", 21 characters), and on the fixed cell every box
+  // at Flinders Street overprinted its neighbours (user report). A complex
+  // with long keys gets wider cells and fewer columns, so the grid grows tall
+  // instead of overlapping — never below two columns, to keep it a grid.
+  const KEY_CHW = 0.62; // em per character of a bold key
+  const cellWOf = (lines) => Math.max(CELL_W, Math.max(...lines.map((l) => l.line.length)) * KEY_CHW + 1.4);
+  const colsOf = (lines) => {
+    const base = perRowOf(lines.length), cw = cellWOf(lines);
+    return cw <= CELL_W ? base : Math.max(2, Math.min(base, Math.round(PER_ROW * CELL_W / cw)));
+  };
   const EM = 9, PAD = 10; // px: label em size in the band, plus breathing room
   // Name-row metrics. The frontend wraps names at text-max-width 10 em with
   // line-height 1.1 (set explicitly in app.js) — roughly 18 chars per line at
@@ -1707,7 +1719,7 @@ const BADGE_BANDS = [[13, 13.6], [13.6, 14.4], [14.4, 15.5], [15.5, 16.8], [16.8
   // full complex footprint in px: box grid below the anchor + name stack above
   const rectOf = (c, band) => {
     const n = c.lines.length;
-    const g = geom(n, band);
+    const g = geom(c.lines, band);
     const nsc = nameScFor(band, n);
     const stackH = c.names.reduce((s, nm) => s + nameRows(nm) * NAME_LH, 0);
     const w = Math.max(g.w, ...c.names.map((nm) => nameWpx(nm) * nsc));
@@ -1719,11 +1731,12 @@ const BADGE_BANDS = [[13, 13.6], [13.6, 14.4], [14.4, 15.5], [15.5, 16.8], [16.8
   const P2 = makeProj(latMid, anchors.length ? anchors[0].lon : 19.94);
   // grid footprint in px for n lines: width, height and the centre's offset below
   // the anchor (the grid hangs under the dot)
-  const geom = (n, band) => {
-    const p = perRowOf(n), sc = scFor(band, n);
+  const geom = (lines, band) => {
+    const n = lines.length;
+    const p = colsOf(lines), sc = scFor(band, n), cw = cellWOf(lines);
     const rows = Math.ceil(n / p), cols = Math.min(p, n);
     return {
-      w: cols * CELL_W * EM * sc + PAD,
+      w: cols * cw * EM * sc + PAD,
       h: ((rows - 1) * CELL_H + 1) * EM * sc + PAD,
       yc: (BASE_Y + ((rows - 1) * CELL_H) / 2) * EM * sc,
     };
@@ -1819,7 +1832,7 @@ const BADGE_BANDS = [[13, 13.6], [13.6, 14.4], [14.4, 15.5], [15.5, 16.8], [16.8
         });
         yOff += nameRows(nm) * NAME_LH;
       }
-      const pRow = perRowOf(lines.length);
+      const pRow = colsOf(lines), cellW = cellWOf(lines);
       if (Math.ceil(lines.length / pRow) > 20) log(`WARNING: badge complex "${c.names[0]}" carries ${lines.length} lines — y offsets nearing the Int16 wrap`);
       lines.forEach((l, i) => {
         const row = Math.floor(i / pRow), col = i % pRow;
@@ -1832,7 +1845,7 @@ const BADGE_BANDS = [[13, 13.6], [13.6, 14.4], [14.4, 15.5], [15.5, 16.8], [16.8
             ...(l.metro ? { metro: 1 } : {}),
             ...(scC < 1 ? { sc: scC } : {}),
             off: [
-              Math.round((col - (rowLen - 1) / 2) * CELL_W * 100) / 100,
+              Math.round((col - (rowLen - 1) / 2) * cellW * 100) / 100,
               Math.round((BASE_Y + row * CELL_H) * 100) / 100,
             ],
           },
